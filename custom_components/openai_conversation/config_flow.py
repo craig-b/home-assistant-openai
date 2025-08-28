@@ -74,6 +74,8 @@ from .const import (
     RECOMMENDED_WEB_SEARCH_USER_LOCATION,
     UNSUPPORTED_MODELS,
     UNSUPPORTED_WEB_SEARCH_MODELS,
+    CONF_BASE_URL,
+    RECOMMENDED_BASE_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,6 +83,7 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_API_KEY): str,
+        vol.Optional(CONF_BASE_URL, default=RECOMMENDED_BASE_URL): str,
     }
 )
 
@@ -91,7 +94,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     client = openai.AsyncOpenAI(
-        api_key=data[CONF_API_KEY], http_client=get_async_client(hass)
+        api_key=data[CONF_API_KEY], http_client=get_async_client(hass), base_url=data[CONF_BASE_URL]
     )
     await hass.async_add_executor_job(client.with_options(timeout=10.0).models.list)
 
@@ -442,6 +445,7 @@ class OpenAISubentryFlowHandler(ConfigSubentryFlow):
             client = openai.AsyncOpenAI(
                 api_key=self._get_entry().data[CONF_API_KEY],
                 http_client=get_async_client(self.hass),
+                base_url=self._get_entry().data[CONF_BASE_URL],
             )
             location_schema = vol.Schema(
                 {
